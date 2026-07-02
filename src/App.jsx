@@ -466,7 +466,26 @@ function AdminModal({ authed, adminUser, adminPass, authErr, setAdminUser, setAd
             </>
           )}
         </div>
-      </div>
+  
+      {showReset&&(
+        <div style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.7)",display:"flex",alignItems:"center",justifyContent:"center",zIndex:9999,padding:20}}>
+          <div style={{background:C.card,border:"1px solid #ef444444",borderRadius:14,padding:28,width:"min(94vw,400px)"}}>
+            <div style={{fontSize:18,fontWeight:800,color:"#ef4444",marginBottom:8}}>⚠️ Reset All Data</div>
+            <p style={{fontSize:13,color:C.textSub,marginBottom:20,lineHeight:1.7}}>This permanently deletes ALL BevTrack data. Type <strong style={{color:"#ef4444"}}>RESET</strong> to confirm.</p>
+            <input id="bev-reset-input" placeholder="Type RESET" style={{width:"100%",padding:11,background:C.bg,border:`1px solid ${C.border}`,borderRadius:8,color:C.text,fontSize:14,outline:"none",boxSizing:"border-box",marginBottom:12,fontFamily:"inherit",textTransform:"uppercase"}} />
+            <div style={{display:"flex",gap:10}}>
+              <button onClick={()=>setShowReset(false)} style={{flex:1,padding:"10px 0",background:"transparent",border:`1px solid ${C.border}`,borderRadius:8,color:C.textSub,fontWeight:600,cursor:"pointer"}}>Cancel</button>
+              <button onClick={()=>{
+                if(document.getElementById("bev-reset-input")?.value?.toUpperCase()==="RESET"){
+                  ["LICENCE_BevTrackPro_v1","bevtrack_pro_data","bevtrack_pro_data_inst"].forEach(k=>localStorage.removeItem(k));
+                  window.location.reload();
+                } else { alert("Please type RESET to confirm."); }
+              }} style={{flex:1,padding:"10px 0",background:"#dc2626",color:"#fff",border:"none",borderRadius:8,fontWeight:800,cursor:"pointer"}}>Delete All Data</button>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
     </div>
   );
 }
@@ -1218,7 +1237,11 @@ function ResetModal({ onConfirm, onCancel, adminPin, accent, cardBg }) {
   const [pin,  setPin]  = useState("");
   const [err,  setErr]  = useState("");
   const [step, setStep] = useState(1);
-  const check = () => { if (pin !== String(adminPin)) { setErr("Incorrect PIN."); return; } setStep(2); };
+  const check = () => {
+    if (!adminPin) { setErr("No admin PIN set yet. Complete the setup wizard first."); return; }
+    if (pin !== String(adminPin)) { setErr("Incorrect PIN. Try again."); setPin(""); return; }
+    setStep(2);
+  };
   return (
     <div style={{ position:"fixed", inset:0, background:"rgba(0,0,0,0.75)", display:"flex", alignItems:"center", justifyContent:"center", zIndex:9999, padding:20 }}>
       <div style={{ background: cardBg||"#1f2330", border:"1px solid #ef444455", borderRadius:14, padding:28, width:"min(94vw,400px)" }}>
@@ -1258,6 +1281,7 @@ function App() {
   const [deliveries, setDeliveries] = useState(saved?.deliveries   || INITIAL_DELIVERIES);
   const [customers, setCustomers]   = useState(saved?.customers    || INITIAL_CUSTOMERS);
   const [tab, setTab]               = useState("dashboard");
+  const [showReset, setShowReset]   = useState(false);
   const [restorePreview, setRestorePreview] = useState(null);
   const [backupMsg, setBackupMsg]   = useState(null);
   const bevFileRef                  = useRef(null);
